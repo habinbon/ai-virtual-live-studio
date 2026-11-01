@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { AvatarCanvas, BACKGROUNDS, type BackgroundPreset } from '../components/AvatarCanvas';
 import { useLiveSession } from '../components/useLiveSession';
-import { api, type MusicTrack } from '../lib/api';
+import { api } from '../lib/api';
 
 export function LivePage() {
   const [name, setName] = useState('Minh');
@@ -10,34 +10,12 @@ export function LivePage() {
   const [background, setBackground] = useState<BackgroundPreset>('office');
   const [vrmStatus, setVrmStatus] = useState('checking');
   const [audioOn, setAudioOn] = useState(true);
-  const [autoSing, setAutoSing] = useState(false);
-  const [tracks, setTracks] = useState<MusicTrack[]>([]);
-  const [trackUrl, setTrackUrl] = useState('');
-  const lastActivityRef = useRef(Date.now());
   const session = useLiveSession({ autoSpeak: true, audioEnabled: audioOn });
-  const { health, queue, machineState, speakingText, errorMsg, anim, audio, lipSyncNote, setLipSyncNote } = session;
-
-  useEffect(() => { api.music().then((r) => setTracks(r.items)).catch(() => undefined); }, []);
-  useEffect(() => {
-    if (queue.some((i) => i.status === 'answered')) lastActivityRef.current = Date.now();
-  }, [queue]);
-
-  // Idle entertainment: after 30s without an answer, sing a selected track.
-  useEffect(() => {
-    if (!autoSing || !trackUrl) return;
-    const id = window.setInterval(() => {
-      if (Date.now() - lastActivityRef.current > 30_000 && audio.kind !== 'music' && machineState === 'IDLE') {
-        session.machine.requestMusic();
-        void audio.playMusic(trackUrl).catch(() => undefined);
-      }
-    }, 5000);
-    return () => window.clearInterval(id);
-  }, [autoSing, trackUrl, audio, machineState, session.machine]);
+  const { health, queue, machineState, speakingText, errorMsg, anim, lipSyncNote, setLipSyncNote } = session;
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (!text.trim()) return;
-    lastActivityRef.current = Date.now();
     const r = await api.chat(name.trim() || 'Khách', text.trim());
     if (r.status === 202) { setSendMsg('Đã gửi — đang chờ AI xử lý.'); setText(''); }
     else setSendMsg(String(r.body.message || r.body.reason || 'Bình luận bị từ chối.'));
@@ -79,17 +57,7 @@ export function LivePage() {
               {Object.entries(BACKGROUNDS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </label>
-          <label className="check"><input type="checkbox" checked={autoSing} onChange={(e) => setAutoSing(e.target.checked)} /> Tự hát nhép sau 30 giây không có bình luận</label>
-          <label>Bài nhạc
-            <select value={trackUrl} onChange={(e) => setTrackUrl(e.target.value)}>
-              <option value="">— Chưa chọn —</option>
-              {tracks.map((t) => <option key={t.file} value={t.url}>{t.name}</option>)}
-            </select>
-          </label>
-          {tracks.length === 0 && <p className="muted small">Thư viện nhạc trống. Quản trị tải file có quyền lên ở /admin → Thư viện nhạc.</p>}
           <div className="row">
-            <button className="btn small" disabled={!trackUrl} onClick={() => { session.machine.requestMusic(); void audio.playMusic(trackUrl).catch(() => undefined); }}>Phát nhạc</button>
-            <button className="btn small" onClick={() => { audio.stopMusic(); session.machine.transition('IDLE'); }}>Dừng nhạc</button>
             <button className="btn small" onClick={session.cancelSpeech}>Hủy câu trả lời đang nói</button>
           </div>
 
