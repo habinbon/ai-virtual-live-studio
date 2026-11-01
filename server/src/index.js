@@ -25,6 +25,7 @@ const store = require('./queue/store');
 const llm = require('./adapters/llm');
 const tts = require('./adapters/tts');
 const voicetube = require('./adapters/voicetube');
+const vieneu = require('./adapters/vieneu');
 const tiktok = require('./adapters/tiktok');
 const auth = require('./auth');
 
@@ -32,6 +33,22 @@ const PORT = Number(process.env.PORT || 3001);
 const HOST = process.env.HOST || '127.0.0.1';
 const UPLOADS_DIR = path.join(ROOT, 'server', 'uploads');
 const DIST_DIR = path.join(ROOT, 'apps', 'web', 'dist');
+
+// Single source of truth for which TTS provider answers /api/tts and what the
+// status endpoints report. Explicit TTS_PROVIDER wins when that provider is
+// configured; otherwise ElevenLabs (primary), then VieNeu (backup), then
+// VoiceTube (async, female selection unverified). Matches the /api/tts
+// route's dispatch below.
+function selectedTtsProvider() {
+  const want = process.env.TTS_PROVIDER;
+  if (want === 'voicetube' && voicetube.isConfigured()) return 'voicetube';
+  if (want === 'vieneu' && vieneu.isConfigured()) return 'vieneu';
+  if (want === 'elevenlabs' && tts.isConfigured()) return 'elevenlabs';
+  if (tts.isConfigured()) return 'elevenlabs';
+  if (vieneu.isConfigured()) return 'vieneu';
+  if (voicetube.isConfigured()) return 'voicetube';
+  return 'unavailable';
+}
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // ---- IP + rate limit (chống lạm dụng API công khai) ----
@@ -207,14 +224,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, {
         ok: true, service: 'ai-virtual-live-studio',
-        build: 'jobinfo-fix-20261101',
+        build: 'vieneu-backup-20261101',
         state: flags.aiRunning ? (flags.paused ? 'PAUSED' : 'IDLE') : 'STOPPED',
         flags,
         llm: { configured: llm.isConfigured(), mock: !llm.isConfigured(), model: process.env.LLM_MODEL || null },
         teacher: { subject: llm.teacherSubject(), level: llm.teacherLevel() },
         tts: tts.status(),
-        ttsProvider: process.env.TTS_PROVIDER === 'voicetube' ? 'voicetube'
-          : (tts.isConfigured() ? 'elevenlabs' : (voicetube.isConfigured() ? 'voicetube' : 'unavailable')),
+        ttsProvider: selectedTtsProvider(),
+        vieneu: vieneu.status(),
         voicetube: voicetube.status(),
         tiktok: tiktok.status(),
         queueLength: store.pending().length,
@@ -229,11 +246,14 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'GET' && pathname === '/api/tts/status') {
-      // Combined status: ElevenLabs (streaming) is the live default; VoiceTube
-      // (async) is opt-in via TTS_PROVIDER=voicetube. Neither is faked.
-      const provider = process.env.TTS_PROVIDER === 'voicetube' ? 'voicetube'
-        : (tts.isConfigured() ? 'elevenlabs' : (voicetube.isConfigured() ? 'voicetube' : 'unavailable'));
-      return sendJson(res, 200, { provider, elevenlabs: tts.status(), voicetube: voicetube.status() });
+      // Combined status: ElevenLabs (streaming) is the live default, VieNeu
+      // (sync) is the backup, VoiceTube (async) is opt-in via
+      // TTS_PROVIDER=voicetube. Neither is faked.
+      return sendJson(res, 200, { provider: selectedTtsProvider(), elevenlabs: tts.status(), vieneu: vieneu.status(), voicetube: voicetube.status() });
+    }
+
+    if (req.method === 'GET' && pathname === '/api/vieneu/status') {
+      return sendJson(res, 200, vieneu.status());
     }
 
     if (req.method === 'GET' && pathname === '/api/voicetube/status') {
@@ -277,10 +297,24 @@ const server = http.createServer(async (req, res) => {
       // Long texts are split into <=900-char chunks inside the TTS adapter
       // and streamed back as one MP3 response (see adapters/tts.js).
       // Provider selection: explicit TTS_PROVIDER wins; otherwise ElevenLabs
-      // (streaming) if configured, else VoiceTube (async) if configured.
+      // (streaming) if configured, else VieNeu (sync backup) if configured,
+      // else VoiceTube (async) if configured.
       const wantVoicetube = process.env.TTS_PROVIDER === 'voicetube';
-      const useVoicetube = wantVoicetube ? voicetube.isConfigured()
-        : (!tts.isConfigured() && voicetube.isConfigured());
+      const wantVieneu = process.env.TTS_PROVIDER === 'vieneu';
+      const useVieneu = wantVieneu ? vieneu.isConfigured()
+        : (!tts.isConfigured() && vieneu.isConfigured());
+      const useVoicetube = !useVieneu && (wantVoicetube ? voicetube.isConfigured()
+        : (!tts.isConfigured() && voicetube.isConfigured()));
+      if (useVieneu) {
+        try {
+          await vieneu.synthesizeToResponse(text, res);
+          return;
+        } catch (e) {
+          lastError = { at: new Date().toISOString(), message: `VieNeu TTS: ${String(e.message || e).slice(0, 200)}` };
+          if (!res.headersSent) return sendJson(res, 502, { error: 'TTS_ERROR', message: lastError.message, provider: 'vieneu' });
+          return;
+        }
+      }
       if (useVoicetube) {
         try {
           await voicetube.synthesizeToResponse(text, res);
@@ -292,7 +326,7 @@ const server = http.createServer(async (req, res) => {
         }
       }
       if (!tts.isConfigured()) {
-        return sendJson(res, 503, { error: 'TTS_UNAVAILABLE', message: 'Chưa có ELEVENLABS_API_KEY hay VOICETUBE_API_KEY trong env của server. Frontend dùng SpeechSynthesis demo.' });
+        return sendJson(res, 503, { error: 'TTS_UNAVAILABLE', message: 'Chưa có ELEVENLABS_API_KEY, VIENEU_API_KEY hay VOICETUBE_API_KEY trong env của server. Frontend dùng SpeechSynthesis demo.' });
       }
       try {
         const handled = await tts.synthesizeToResponse(text, res);
