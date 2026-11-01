@@ -12,7 +12,7 @@ export function BroadcastPage() {
   const audioParam = params.get('audio');
   const bgParam = params.get('bg') as BackgroundPreset | null;
   const [background] = useState<BackgroundPreset>(
-    bgParam && ['podcast', 'bedroom', 'music', 'cafe', 'chat'].includes(bgParam) ? bgParam : 'podcast',
+    bgParam && ['podcast', 'bedroom', 'music', 'cafe', 'chat', 'office'].includes(bgParam) ? bgParam : 'office',
   );
   const [audioOn, setAudioOn] = useState(audioParam !== 'off');
   const session = useLiveSession({ autoSpeak: true, audioEnabled: audioOn });

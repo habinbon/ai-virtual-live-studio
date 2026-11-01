@@ -7,7 +7,7 @@ export function LivePage() {
   const [name, setName] = useState('Minh');
   const [text, setText] = useState('');
   const [sendMsg, setSendMsg] = useState('');
-  const [background, setBackground] = useState<BackgroundPreset>('podcast');
+  const [background, setBackground] = useState<BackgroundPreset>('office');
   const [vrmStatus, setVrmStatus] = useState('checking');
   const [audioOn, setAudioOn] = useState(true);
   const [autoSing, setAutoSing] = useState(false);

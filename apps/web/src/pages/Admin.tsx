@@ -4,7 +4,7 @@ import { useLiveSession } from '../components/useLiveSession';
 import { api, type MusicTrack } from '../lib/api';
 
 export function AdminPage() {
-  const [background, setBackground] = useState<BackgroundPreset>('podcast');
+  const [background, setBackground] = useState<BackgroundPreset>('office');
   const [sayText, setSayText] = useState('');
   const [lessonTopic, setLessonTopic] = useState('');
   const [testName, setTestName] = useState('Khách thử');
