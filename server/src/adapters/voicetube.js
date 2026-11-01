@@ -72,8 +72,15 @@ function findAudioUrl(obj) {
   return null;
 }
 function jobInfo(body) {
-  if (body && typeof body === 'object') return body.job || body.modal || body;
-  return {};
+  // Create trả về jobId ở TOP-LEVEL kèm object modal (chỉ có status/metrics,
+  // không có jobId) — modal KHÔNG được lấn át top-level, nếu không sẽ mất
+  // jobId (lỗi VOICETUBE_NO_JOB_ID ngày 2026-11-01 dù body có jobId).
+  // Job GET trả về {"job": {...}} — unwrap job. Ưu tiên object nào có id.
+  if (!body || typeof body !== 'object') return {};
+  if (body.jobId || body.id || body.job_id) return body;
+  if (body.job && typeof body.job === 'object') return body.job;
+  if (body.data && typeof body.data === 'object') return jobInfo(body.data);
+  return body;
 }
 async function apiJson(path, options = {}) {
   const res = await fetch(BASE + path, {
@@ -131,7 +138,7 @@ async function synthesize(text, { pollMs = 2000, timeoutMs = 120000 } = {}) {
   }
   const createdJob = jobInfo(created.data);
   const jobId = createdJob.jobId || createdJob.id || createdJob.job_id;
-  if (!jobId) throw new Error('VOICETUBE_NO_JOB_ID');
+  if (!jobId) throw new Error(`VOICETUBE_NO_JOB_ID: ${String(created.text || '').slice(0, 300)}`);
   const deadline = Date.now() + timeoutMs;
   for (;;) {
     if (Date.now() > deadline) throw new Error('VOICETUBE_TIMEOUT');

@@ -2,7 +2,7 @@
 // LLM adapter: OpenAI-compatible chat completions ONLY when env keys exist.
 // No key -> explicit MOCK_DEMO mode. Never pretend mock output is real AI.
 //
-// Chế độ cô giáo: nhân vật là cô Linh, giáo viên AI. Môn học và trình độ
+// Chế độ cô giáo: nhân vật là cô Quyên, giáo viên AI. Môn học và trình độ
 // lấy từ TEACHER_SUBJECT / TEACHER_LEVEL (để trống = dạy chung theo câu hỏi).
 // CHARACTER_SYSTEM_PROMPT vẫn ghi đè toàn bộ prompt khi được đặt.
 function teacherSubject() {
@@ -15,7 +15,7 @@ function teacherLevel() {
 }
 
 function teacherSystemPrompt() {
-  return `Bạn là cô Linh, một chuyên gia tâm lý giáo dục, dạy và hỗ trợ tâm lý cho học sinh qua trò chuyện trực tuyến. Bạn nói tiếng Việt tự nhiên, ấm áp, kiên nhẫn và không phán xét.
+  return `Bạn là cô Quyên, một chuyên gia tâm lý giáo dục, dạy và hỗ trợ tâm lý cho học sinh qua trò chuyện trực tuyến. Bạn nói tiếng Việt tự nhiên, ấm áp, kiên nhẫn và không phán xét.
 Môn dạy: ${teacherSubject()}. Đối tượng: ${teacherLevel()}.
 CÁCH BẠN SUY NGHĨ — chỉ chạy ngầm trong đầu, KHÔNG viết ra, KHÔNG đọc lên:
 1) Lắng nghe và thấu cảm: tóm tắt lại điều em vừa kể bằng lời của bạn để em thấy mình được hiểu, công nhận cảm xúc của em là bình thường và đáng được lắng nghe.
@@ -35,7 +35,7 @@ Quy tắc an toàn:
 }
 
 function lessonSystemPrompt(topic) {
-  return `Bạn là cô Linh, một chuyên gia tâm lý giáo dục, dạy và hỗ trợ tâm lý cho học sinh qua trò chuyện trực tuyến. Bạn nói tiếng Việt tự nhiên, ấm áp, kiên nhẫn và không phán xét.
+  return `Bạn là cô Quyên, một chuyên gia tâm lý giáo dục, dạy và hỗ trợ tâm lý cho học sinh qua trò chuyện trực tuyến. Bạn nói tiếng Việt tự nhiên, ấm áp, kiên nhẫn và không phán xét.
 Môn dạy: ${teacherSubject()}. Đối tượng: ${teacherLevel()}.
 Soạn một bài giảng ngắn về chủ đề tâm lý: "${topic}".
 Bài giảng nói liền mạch như cô giáo đang giảng: mở đầu nêu ý chính của bài trong 1 câu, rồi giải thích khái niệm tâm lý bằng ngôn ngữ đơn giản đúng lứa tuổi, có ví dụ gần gũi với đời sống học sinh, rồi đưa 1-2 bài tập thực hành nhỏ (ví dụ: nhận diện cảm xúc, hít thở chậm, viết ra điều khiến mình vui), và dặn học sinh gửi cảm nhận hoặc câu hỏi tiếp theo.
@@ -101,11 +101,11 @@ function isConfigured() {
 
 function mockReply(name, text) {
   const topic = text.length > 60 ? text.slice(0, 60) + '…' : text;
-  return `[BẢN DEMO — chưa có LLM] Chào ${name} nha! Cô Linh nghe câu "${topic}" rồi, cô hiểu cảm xúc của bạn. Đây là bản demo, khi có key LLM cô sẽ lắng nghe, hỏi làm rõ và cùng bạn tìm hướng giải quyết nhé. Bạn muốn kể thêm về phần nào nào?`;
+  return `[BẢN DEMO — chưa có LLM] Chào ${name} nha! Cô Quyên nghe câu "${topic}" rồi, cô hiểu cảm xúc của bạn. Đây là bản demo, khi có key LLM cô sẽ lắng nghe, hỏi làm rõ và cùng bạn tìm hướng giải quyết nhé. Bạn muốn kể thêm về phần nào nào?`;
 }
 
 function mockLesson(topic) {
-  return `[BẢN DEMO — chưa có LLM] Bài giảng thử về "${topic}": đây là bản demo, khi có key LLM cô Linh sẽ giảng kiến thức tâm lý từng bước, có ví dụ gần gũi và bài tập thực hành nhỏ. Bạn gửi câu hỏi cụ thể để cô giảng thử nhé.`;
+  return `[BẢN DEMO — chưa có LLM] Bài giảng thử về "${topic}": đây là bản demo, khi có key LLM cô Quyên sẽ giảng kiến thức tâm lý từng bước, có ví dụ gần gũi và bài tập thực hành nhỏ. Bạn gửi câu hỏi cụ thể để cô giảng thử nhé.`;
 }
 
 function llmParams() {
