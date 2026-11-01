@@ -35,6 +35,7 @@ Web dev/preview proxy mọi `/api/*` sang `http://127.0.0.1:3001`.
 | `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` | Không — nếu thiếu thì **MOCK_DEMO** | LLM OpenAI-compatible. Không có key: câu trả lời bắt đầu bằng `[BẢN DEMO — chưa có LLM]`, không giả vờ là AI thật |
 | `ELEVENLABS_API_KEY`, `ELEVENLABS_VOICE_ID` | Không — nếu thiếu thì TTS unavailable | ElevenLabs streaming phía server (`eleven_v4`, `language_code: vi`, giọng đã chốt Linh Sensei `7iUjM4919D20JYbu4ISi`, user duyệt bằng tai 2026-11-01). Không có key: trình duyệt dùng SpeechSynthesis làm demo, UI ghi rõ |
 | `TTS_PROVIDER`, `VOICETUBE_API_KEY`, `VOICETUBE_VOICE_ID`, `VOICETUBE_SPEED` | Không — opt-in | VoiceTube async (job + polling, `server/src/adapters/voicetube.js`). Giọng Ngọc Huyền 2.0 đã **bị loại** sau khi user nghe mẫu thật là giọng nam và kiểm chứng kỹ cho thấy API không chọn được giọng (xem `poc/VOICETUBE_SAMPLE.md`); **giọng Live Studio đã chốt là Linh Sensei trên ElevenLabs**, VoiceTube không còn là hướng giọng chính. Độ trễ mẫu ~23 giây, không đạt 3–5 giây. **Key trong Secure Vault của Muse không tự chảy sang server** — người vận hành phải nhập key vào `.env` của server. `TTS_PROVIDER=voicetube` ép dùng VoiceTube; để trống thì ưu tiên ElevenLabs |
+| `VIENEU_API_KEY`, `VIENEU_VOICE_ID`, `VIENEU_SPEED`, `VIENEU_EMOTION` | Không — opt-in/dự phòng | VieNeu sync (`POST /api/v1/audio/speech`, `server/src/adapters/vieneu.js`). Giọng dự phòng đã chốt: **Huyền Trang** (nữ, miền Bắc, rõ ràng, trẻ trung — user chọn bằng tai 2026-11-01 trong 3 mẫu, F0 230.8 Hz; xem `poc/VIENEU_SAMPLE.md`). Mẫu ngắn ~3,7 giây, trong mục tiêu live 3–5 giây. **Cần key riêng của người vận hành cho server** — key dùng thử của Muse không chảy sang server và hết hạn 2026-11-06. `TTS_PROVIDER=vieneu` ép dùng VieNeu; để trống thì ưu tiên ElevenLabs, rồi VieNeu, rồi VoiceTube |
 | `CHARACTER_SYSTEM_PROMPT` | Không | System prompt nhân vật (mặc định trong `server/src/adapters/llm.js`) |
 
 **Không bao giờ** ghi key vào code, `.env.example`, log hay báo cáo. API key chỉ ở
@@ -118,6 +119,7 @@ trùng lặp/rate-limit) → hàng đợi → LLM (hoặc MOCK_DEMO) → câu tr
 | LLM thật | CẦN KEY (`LLM_API_KEY` + `LLM_BASE_URL`) |
 | TTS ElevenLabs thật | CẦN KEY (`ELEVENLABS_API_KEY`) |
 | TTS VoiceTube (chưa có giọng chốt) | ADAPTER ĐÃ CÓ, CẦN KEY RIÊNG CHO SERVER (`VOICETUBE_API_KEY`); Ngọc Huyền 2.0 đã loại (nghe thật là nam); độ trễ mẫu ~23 giây, không realtime |
+| TTS VieNeu (giọng dự phòng Huyền Trang) | ADAPTER ĐÃ CÓ, CẦN KEY RIÊNG CHO SERVER (`VIENEU_API_KEY`); mẫu ngắn ~3,7 giây; giọng đã chọn bằng tai 2026-11-01 |
 | Hát nhép theo file nhạc thật | ĐÃ CÓ (thư viện trống — chỉ file có quyền) |
 | Broadcast OBS 1080×1920 | ĐÃ CÓ |
 | Đọc bình luận TikTok LIVE | CHƯA KHẢ DỤNG (cần quyền tích hợp chính thức) |
