@@ -207,11 +207,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, {
         ok: true, service: 'ai-virtual-live-studio',
+        build: 'jobinfo-fix-20261101',
         state: flags.aiRunning ? (flags.paused ? 'PAUSED' : 'IDLE') : 'STOPPED',
         flags,
         llm: { configured: llm.isConfigured(), mock: !llm.isConfigured(), model: process.env.LLM_MODEL || null },
         teacher: { subject: llm.teacherSubject(), level: llm.teacherLevel() },
         tts: tts.status(),
+        ttsProvider: process.env.TTS_PROVIDER === 'voicetube' ? 'voicetube'
+          : (tts.isConfigured() ? 'elevenlabs' : (voicetube.isConfigured() ? 'voicetube' : 'unavailable')),
         voicetube: voicetube.status(),
         tiktok: tiktok.status(),
         queueLength: store.pending().length,
@@ -356,7 +359,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readJsonBody(req);
       const topic = String(body.topic || '').trim();
       if (!topic) return sendJson(res, 400, { error: 'EMPTY_TOPIC' });
-      const item = store.enqueue({ name: 'Cô Linh', text: topic.slice(0, 200), source: 'manual_test', priority: 10, kind: 'lesson' });
+      const item = store.enqueue({ name: 'Cô Quyên', text: topic.slice(0, 200), source: 'manual_test', priority: 10, kind: 'lesson' });
       broadcast('queue', { queue: store.listQueue() });
       setTimeout(processQueue, 50);
       return sendJson(res, 202, { ok: true, status: 'queued', id: item.id });
