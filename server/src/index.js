@@ -224,7 +224,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, {
         ok: true, service: 'ai-virtual-live-studio',
-        build: 'vieneu-backup-20261101',
+        build: 'vrm-head-fix-20261101',
         state: flags.aiRunning ? (flags.paused ? 'PAUSED' : 'IDLE') : 'STOPPED',
         flags,
         llm: { configured: llm.isConfigured(), mock: !llm.isConfigured(), model: process.env.LLM_MODEL || null },
@@ -476,7 +476,7 @@ const server = http.createServer(async (req, res) => {
 
     // Phục vụ giao diện đã build (production): apps/web/dist do Render build.
     // Khi chạy dev bằng Vite (chưa có dist) thì giữ hành vi cũ: API-only.
-    if (req.method === 'GET' && !pathname.startsWith('/api')) {
+    if ((req.method === 'GET' || req.method === 'HEAD') && !pathname.startsWith('/api')) {
       if (fs.existsSync(DIST_DIR)) {
         const STATIC_TYPES = {
           '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -495,7 +495,11 @@ const server = http.createServer(async (req, res) => {
           filePath = path.join(DIST_DIR, 'index.html'); // SPA fallback
         }
         const ext = path.extname(filePath).toLowerCase();
-        res.writeHead(200, { 'Content-Type': STATIC_TYPES[ext] || 'application/octet-stream', 'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600' });
+        // HEAD phải trả đúng header như GET nhưng không có body: trang live
+        // dùng HEAD để kiểm tra model VRM trước khi tải (xem AvatarCanvas).
+        const size = fs.statSync(filePath).size;
+        res.writeHead(200, { 'Content-Type': STATIC_TYPES[ext] || 'application/octet-stream', 'Content-Length': size, 'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=3600' });
+        if (req.method === 'HEAD') return res.end();
         return fs.createReadStream(filePath).pipe(res);
       }
       if (pathname === '/') {
