@@ -52,7 +52,7 @@ export function LivePage() {
     <div className="live-layout">
       <header className="topbar">
         <a href="#/">← Trang chủ</a>
-        <strong>Cô Linh — Giáo viên AI</strong>
+        <strong>Cô Quyên — Giáo viên AI</strong>
         <span className="ai-badge small">AI · KHÔNG PHẢI NGƯỜI THẬT</span>
         <span className="muted">Trạng thái: {machineState}</span>
         <button className="btn small" onClick={() => setAudioOn((v) => !v)}>{audioOn ? 'Tắt tiếng' : 'Bật tiếng'}</button>
@@ -62,10 +62,10 @@ export function LivePage() {
         <section className="stage">
           <AvatarCanvas anim={anim} background={background} onVrmStatus={(s) => setVrmStatus(s)} lipSyncNote={lipSyncNote} onLipSyncNote={setLipSyncNote} />
           <div className="stage-footer">
-            <div className="subtitle" aria-live="polite">{speakingText || (machineState === 'THINKING' ? 'Cô Linh đang suy nghĩ…' : machineState === 'SINGING' ? '♪ Đang hát nhép theo nhạc…' : 'Cô Linh đang lắng nghe — hãy gửi câu hỏi nhé!')}</div>
+            <div className="subtitle" aria-live="polite">{speakingText || (machineState === 'THINKING' ? 'Cô Quyên đang suy nghĩ…' : machineState === 'SINGING' ? '♪ Đang hát nhép theo nhạc…' : 'Cô Quyên đang lắng nghe — hãy gửi câu hỏi nhé!')}</div>
             <div className="muted small">
               {health?.llm.mock ? 'Chế độ DEMO: chưa có LLM key — câu trả lời có tiền tố [BẢN DEMO — chưa có LLM]. ' : 'LLM đã cấu hình. '}
-              {health?.tts.configured ? 'Giọng: ElevenLabs (server).' : 'Giọng: demo SpeechSynthesis của trình duyệt.'}
+              {health?.ttsProvider === 'voicetube' ? 'Giọng: VoiceTube (server).' : health?.tts.configured ? 'Giọng: ElevenLabs (server).' : 'Giọng: demo SpeechSynthesis của trình duyệt.'}
               {' '}VRM: {vrmStatus}. TikTok: CHƯA KHẢ DỤNG.
             </div>
             {errorMsg && <div className="error-box" role="alert">{errorMsg} <button className="btn small" onClick={() => session.setErrorMsg('')}>Đóng</button></div>}
@@ -105,7 +105,7 @@ export function LivePage() {
               <div key={i.id} className="comment pending"><b>{i.name}</b> <span className="muted">({i.source})</span><br />{i.text}<br /><span className="muted small">{i.status === 'thinking' ? 'AI đang suy nghĩ…' : 'Đang chờ…'}</span></div>
             ))}
             {answered.slice(0, 8).map((i) => (
-              <div key={i.id} className="comment"><b>{i.name}</b>{i.kind === 'lesson' ? ' · BÀI GIẢNG' : ''}<br />{i.kind === 'lesson' ? `Bài giảng: ${i.text}` : i.text}<br /><span className="reply">Cô Linh: {i.reply}</span></div>
+              <div key={i.id} className="comment"><b>{i.name}</b>{i.kind === 'lesson' ? ' · BÀI GIẢNG' : ''}<br />{i.kind === 'lesson' ? `Bài giảng: ${i.text}` : i.text}<br /><span className="reply">Cô Quyên: {i.reply}</span></div>
             ))}
             {queue.length === 0 && <p className="muted">Chưa có bình luận nào.</p>}
           </div>

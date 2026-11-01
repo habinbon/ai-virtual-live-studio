@@ -22,7 +22,7 @@ export function BroadcastPage() {
     <div className="broadcast">
       <AvatarCanvas anim={session.anim} background={background} onVrmStatus={() => undefined} lipSyncNote="" onLipSyncNote={() => undefined} />
       <div className="broadcast-overlay">
-        <span className="ai-badge small">AI VIRTUAL · LINH</span>
+        <span className="ai-badge small">AI VIRTUAL · QUYÊN</span>
         <div className="broadcast-subtitle" aria-live="polite">
           {session.speakingText || latest?.reply || ''}
         </div>

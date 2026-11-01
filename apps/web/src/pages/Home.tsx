@@ -9,7 +9,7 @@ export function HomePage() {
         <p className="ai-badge">NHÂN VẬT LÀ AI — không phải người thật</p>
         <h1>Cô giáo AI dạy học trực tuyến, giảng bài và trả lời câu hỏi bằng giọng nói.</h1>
         <p>
-          Cô Linh — giáo viên AI — ngồi trong lớp học ảo, giảng bài từng bước và trả lời
+          Cô Quyên — giáo viên AI — ngồi trong lớp học ảo, giảng bài từng bước và trả lời
           câu hỏi của học sinh thành tiếng, đồng bộ khẩu hình với âm thanh. Giáo viên
           dạy bài mới từ trang quản trị; học sinh gửi câu hỏi ở phòng học.
         </p>

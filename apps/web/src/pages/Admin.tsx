@@ -8,7 +8,7 @@ export function AdminPage() {
   const [sayText, setSayText] = useState('');
   const [lessonTopic, setLessonTopic] = useState('');
   const [testName, setTestName] = useState('Khách thử');
-  const [testText, setTestText] = useState('Linh ơi, hôm nay có vui không?');
+  const [testText, setTestText] = useState('Quyên ơi, hôm nay có vui không?');
   const [adminMsg, setAdminMsg] = useState('');
   const [tracks, setTracks] = useState<MusicTrack[]>([]);
   const [history, setHistory] = useState<Array<{ id: string; name: string; text: string; reply: string | null; mock: boolean | null; latencyMs: number | null; createdAt: string }>>([]);
@@ -112,7 +112,7 @@ export function AdminPage() {
             <button className="btn" onClick={() => void control('resume')}>Tiếp tục</button>
             <button className="btn" onClick={() => void control(health?.flags.autoReply ? 'autoReplyOff' : 'autoReplyOn')}>{health?.flags.autoReply ? 'Tắt tự trả lời' : 'Bật tự trả lời'}</button>
             <button className="btn" onClick={async () => { await api.clearQueue(); setAdminMsg('Đã xóa hàng đợi.'); await loadAll(); }}>Xóa hàng đợi</button>
-            <button className="btn" onClick={() => void session.speak('Xin chào, Linh là nhân vật AI. Đây là kiểm tra âm thanh.').catch(() => setAdminMsg('Kiểm tra âm thanh thất bại — xem lỗi TTS.'))}>Kiểm tra âm thanh</button>
+            <button className="btn" onClick={() => void session.speak('Xin chào, Quyên là nhân vật AI. Đây là kiểm tra âm thanh.').catch(() => setAdminMsg('Kiểm tra âm thanh thất bại — xem lỗi TTS.'))}>Kiểm tra âm thanh</button>
           </div>
           {adminMsg && <p className="muted" role="status">{adminMsg}</p>}
         </section>
@@ -123,7 +123,7 @@ export function AdminPage() {
           {queue.map((i) => (
             <div key={i.id} className="comment">
               <b>{i.name}</b> <span className="muted">({i.source} · {i.status}{i.kind === 'lesson' ? ' · BÀI GIẢNG' : ''})</span><br />{i.kind === 'lesson' ? `Bài giảng: ${i.text}` : i.text}
-              {i.reply && <><br /><span className="reply">Linh: {i.reply}</span></>}
+              {i.reply && <><br /><span className="reply">Cô Quyên: {i.reply}</span></>}
               <div className="row">
                 {i.status === 'queued' && <button className="btn small" onClick={async () => { await api.answer(i.id); await loadAll(); }}>Chọn để trả lời</button>}
               </div>
@@ -169,8 +169,8 @@ export function AdminPage() {
         <section className="card">
           <h2>Dạy bài mới</h2>
           <input value={lessonTopic} onChange={(e) => setLessonTopic(e.target.value)} placeholder="Chủ đề bài giảng, ví dụ: Phân số lớp 4…" maxLength={200} />
-          <button className="btn primary" onClick={async () => { if (!lessonTopic.trim()) return; await api.lesson(lessonTopic.trim()); setLessonTopic(''); setAdminMsg('Đã đưa bài giảng vào hàng đợi ưu tiên.'); await loadAll(); }}>Cô Linh dạy bài này</button>
-          <p className="muted small">Cô Linh soạn bài giảng có mục tiêu, giảng từng bước, ví dụ và câu luyện tập, rồi đọc lên như trên lớp. Môn học và trình độ lấy từ TEACHER_SUBJECT / TEACHER_LEVEL trong file .env của server.</p>
+          <button className="btn primary" onClick={async () => { if (!lessonTopic.trim()) return; await api.lesson(lessonTopic.trim()); setLessonTopic(''); setAdminMsg('Đã đưa bài giảng vào hàng đợi ưu tiên.'); await loadAll(); }}>Cô Quyên dạy bài này</button>
+          <p className="muted small">Cô Quyên soạn bài giảng có mục tiêu, giảng từng bước, ví dụ và câu luyện tập, rồi đọc lên như trên lớp. Môn học và trình độ lấy từ TEACHER_SUBJECT / TEACHER_LEVEL trong file .env của server.</p>
         </section>
 
         <section className="card">
