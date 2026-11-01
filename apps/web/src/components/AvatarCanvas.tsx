@@ -9,13 +9,14 @@ import type { AvatarAnimState } from '../audio/animState';
 import { tryCreateVrmLipSync, registerVrmLipSyncDriver } from '../lipsync/vrmAdapter';
 import type { VrmLipSyncDriver } from '../lipsync/vrmAdapter';
 
-export type BackgroundPreset = 'podcast' | 'bedroom' | 'music' | 'cafe' | 'chat';
-export const BACKGROUNDS: Record<BackgroundPreset, { label: string; wall: string; accent: string }> = {
+export type BackgroundPreset = 'podcast' | 'bedroom' | 'music' | 'cafe' | 'chat' | 'office';
+export const BACKGROUNDS: Record<BackgroundPreset, { label: string; wall: string; accent: string; photo?: string }> = {
   podcast: { label: 'Phòng podcast', wall: '#1f2430', accent: '#f59e0b' },
   bedroom: { label: 'Phòng ngủ streamer', wall: '#2b1f2e', accent: '#ec4899' },
   music: { label: 'Studio âm nhạc', wall: '#172033', accent: '#22d3ee' },
   cafe: { label: 'Quán cà phê', wall: '#2e2118', accent: '#a78bfa' },
   chat: { label: 'Phòng trò chuyện', wall: '#14261f', accent: '#34d399' },
+  office: { label: 'Văn phòng tâm lý', wall: '#24352c', accent: '#e8b45a', photo: '/backgrounds/therapist-office.jpg' },
 };
 export type VrmStatus = 'checking' | 'vrm' | 'fallback' | 'vrm-error';
 
@@ -297,15 +298,18 @@ export function AvatarCanvas({
   }, [onVrmStatus]);
 
   const note = useMemo(() => lipSyncNote, [lipSyncNote]);
+  // Nền ảnh: ảnh phủ kín khung (CSS cover, đúng mọi tỉ lệ kể cả 9:16),
+  // canvas trong suốt, chỉ vẽ nhân vật + bóng đổ; phòng 3D không vẽ nữa.
+  const photo = BACKGROUNDS[background].photo;
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      <Canvas camera={{ position: [0, 1.3, 4.2], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', ...(photo ? { backgroundImage: `url(${photo})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}) }}>
+      <Canvas camera={{ position: [0, 1.3, 4.2], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true, alpha: Boolean(photo) }}>
         <ambientLight intensity={0.9} />
         <directionalLight position={[1.5, 2.5, 2]} intensity={1.6} />
         <directionalLight position={[-1.5, 1.5, 1.5]} intensity={0.5} color="#c7d2fe" />
         <Suspense fallback={null}>
-          <Room preset={background} />
+          {photo ? null : <Room preset={background} />}
           {hasVrmFile
             ? <VrmAvatar anim={anim} url={VRM_URL} onLipSyncNote={onLipSyncNote} onLoadError={() => { setStatus('vrm-error'); onVrmStatus('vrm-error'); }} />
             : <FallbackAvatar anim={anim} />}
