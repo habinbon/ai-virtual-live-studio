@@ -1,0 +1,38 @@
+# Render Blueprint: deploy AI Virtual Live Studio lên Render (gói miễn phí).
+# Cách dùng: xem DEPLOY_RENDER.md. Các giá trị sync: false sẽ được Render hỏi
+# khi tạo service — nhập trực tiếp trong trang quản trị của Render, KHÔNG
+# ghi key vào file này, KHÔNG gửi key qua chat.
+services:
+  - type: web
+    name: ai-virtual-live-studio
+    env: node
+    plan: free
+    buildCommand: cd apps/web && npm install && npm run build
+    startCommand: node server/src/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: TRUST_PROXY
+        value: "1"
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_MODEL
+        value: openai/gpt-oss-20b
+      - key: LLM_API_KEY
+        sync: false
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: ELEVENLABS_VOICE_ID
+        value: 7iUjM4919D20JYbu4ISi
+      - key: TEACHER_SUBJECT
+        value: Tâm lý học (giáo dục tâm lý cho học sinh)
+      - key: TEACHER_LEVEL
+        value: học sinh phổ thông
+      - key: LLM_MAX_TOKENS
+        value: "900"
+      - key: LLM_TEMPERATURE
+        value: "0.7"
+      - key: ADMIN_PASSWORD
+        sync: false
