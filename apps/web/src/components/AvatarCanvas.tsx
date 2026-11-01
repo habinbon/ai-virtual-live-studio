@@ -300,11 +300,12 @@ export function AvatarCanvas({
   const note = useMemo(() => lipSyncNote, [lipSyncNote]);
   // Nền ảnh: ảnh phủ kín khung (CSS cover, đúng mọi tỉ lệ kể cả 9:16),
   // canvas trong suốt, chỉ vẽ nhân vật + bóng đổ; phòng 3D không vẽ nữa.
+  // Nhân vật đứng góc dưới-phải của khung (dịch canvas, ảnh nền giữ nguyên).
   const photo = BACKGROUNDS[background].photo;
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', ...(photo ? { backgroundImage: `url(${photo})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}) }}>
-      <Canvas camera={{ position: [0, 1.3, 4.2], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true, alpha: Boolean(photo) }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', ...(photo ? { backgroundImage: `url(${photo})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}) }}>
+      <Canvas camera={{ position: [0, 1.3, 4.2], fov: 36 }} dpr={[1, 2]} gl={{ antialias: true, alpha: Boolean(photo) }} style={photo ? { transform: 'translate(28%, 6%)' } : undefined}>
         <ambientLight intensity={0.9} />
         <directionalLight position={[1.5, 2.5, 2]} intensity={1.6} />
         <directionalLight position={[-1.5, 1.5, 1.5]} intensity={0.5} color="#c7d2fe" />
