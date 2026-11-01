@@ -7,7 +7,7 @@ services:
     name: ai-virtual-live-studio
     env: node
     plan: free
-    buildCommand: cd apps/web && npm install && npm run build
+    buildCommand: cd apps/web && npm install --include=dev && npm run build
     startCommand: node server/src/index.js
     envVars:
       - key: NODE_ENV

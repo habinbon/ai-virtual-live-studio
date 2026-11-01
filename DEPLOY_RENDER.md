@@ -1,4 +1,4 @@
-# Đưa Cô Linh lên mạng — bản đầy đủ, miễn phí (Render)
+# Đưa Cô Quyên lên mạng — bản đầy đủ, miễn phí (Render)
 
 Hướng dẫn này dùng ngôn ngữ đơn giản, từng bước một. Bạn là người tạo tài
 khoản và nhập key — key chỉ được gõ trực tiếp trong trang cài đặt của
@@ -50,7 +50,7 @@ Cách khác (nếu bạn quen dùng git): `git init`, `git add .`, `git commit`,
    `ai-virtual-live-studio` vừa tạo → bấm **Connect**.
 3. Render đọc file `render.yaml` và tự điền sẵn: tên service, lệnh build,
    lệnh chạy. Bạn kiểm tra lại:
-   - **Build Command:** `cd apps/web && npm install && npm run build`
+   - **Build Command:** `cd apps/web && npm install --include=dev && npm run build` (phải có `--include=dev` vì Render đặt `NODE_ENV=production` nên `npm install` thường sẽ bỏ qua gói dev như `vite`/`typescript` và build lỗi thiếu kiểu `vite/client`)
    - **Start Command:** `node server/src/index.js`
    - **Plan:** **Free**
 4. Phần **Environment Variables**: Render sẽ hỏi các giá trị còn trống.
@@ -73,7 +73,7 @@ Cách khác (nếu bạn quen dùng git): `git init`, `git add .`, `git commit`,
 
 1. Mở địa chỉ Render vừa nhận trên trình duyệt (máy tính hoặc điện thoại).
    Trang chủ hiện lên, bấm **Vào phòng học**.
-2. Gửi thử một câu hỏi ngắn. Cô Linh trả lời bằng giọng nói và miệng cử
+2. Gửi thử một câu hỏi ngắn. Cô Quyên trả lời bằng giọng nói và miệng cử
    động theo tiếng. (Nếu trang vừa "ngủ", lần tải đầu hơi chậm — đợi
    khoảng 1 phút rồi tải lại.)
 3. Mở `https://<địa-chỉ-của-bạn>.onrender.com/#/admin`. Trang quản trị

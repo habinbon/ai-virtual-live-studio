@@ -1,6 +1,6 @@
 # AI Virtual Live Studio — MVP
 
-Nhân vật AI livestream (tên mặc định **Linh**) ngồi trong studio ảo, trả lời bình luận
+Nhân vật AI livestream (tên mặc định **Quyên**) ngồi trong studio ảo, trả lời bình luận
 bằng giọng nói, đồng bộ khẩu hình với âm thanh. **Nhân vật là AI — không phải người thật**,
 điều này được ghi rõ trên mọi trang.
 
