@@ -9,6 +9,7 @@ export type Health = {
   flags: { aiRunning: boolean; autoReply: boolean; paused: boolean };
   llm: { configured: boolean; mock: boolean; model: string | null };
   tts: { configured: boolean; provider: string; voiceId: string; model: string; languageCode: string; note: string };
+  ttsProvider: string;
   tiktok: { status: string; available: boolean; reason: string };
   queueLength: number; historyCount: number; lastError: { at: string; message: string } | null;
 };
