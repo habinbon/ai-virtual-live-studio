@@ -18,6 +18,9 @@
   },
   "name": "ai-virtual-live-studio-web",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "build": "tsc --noEmit && vite build",
     "dev": "vite --host 127.0.0.1 --port 5173",
