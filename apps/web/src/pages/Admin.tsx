@@ -151,9 +151,10 @@ export function AdminPage() {
               {Object.entries(BACKGROUNDS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
             </select>
           </label>
-          <label>Giọng đọc (hiển thị — giọng ElevenLabs thật do server env quyết định)
+          <label>Giọng đọc (hiển thị — giọng thật do server env quyết định)
             <select value={voice} onChange={(e) => setVoice(e.target.value)}>
               <option value="elevenlabs-default">ElevenLabs Linh Sensei — eleven_v4, vi (server)</option>
+              <option value="vieneu-default">VieNeu Huyền Trang — v4, vi (server, dự phòng)</option>
               <option value="browser-vi">Giọng trình duyệt tiếng Việt (demo, khi chưa có key)</option>
             </select>
           </label>

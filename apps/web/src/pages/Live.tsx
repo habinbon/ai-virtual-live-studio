@@ -65,7 +65,7 @@ export function LivePage() {
             <div className="subtitle" aria-live="polite">{speakingText || (machineState === 'THINKING' ? 'Cô Quyên đang suy nghĩ…' : machineState === 'SINGING' ? '♪ Đang hát nhép theo nhạc…' : 'Cô Quyên đang lắng nghe — hãy gửi câu hỏi nhé!')}</div>
             <div className="muted small">
               {health?.llm.mock ? 'Chế độ DEMO: chưa có LLM key — câu trả lời có tiền tố [BẢN DEMO — chưa có LLM]. ' : 'LLM đã cấu hình. '}
-              {health?.ttsProvider === 'voicetube' ? 'Giọng: VoiceTube (server).' : health?.tts.configured ? 'Giọng: ElevenLabs (server).' : 'Giọng: demo SpeechSynthesis của trình duyệt.'}
+              {health?.ttsProvider === 'voicetube' ? 'Giọng: VoiceTube (server).' : health?.ttsProvider === 'vieneu' ? 'Giọng: VieNeu (server).' : health?.tts.configured ? 'Giọng: ElevenLabs (server).' : 'Giọng: demo SpeechSynthesis của trình duyệt.'}
               {' '}VRM: {vrmStatus}. TikTok: CHƯA KHẢ DỤNG.
             </div>
             {errorMsg && <div className="error-box" role="alert">{errorMsg} <button className="btn small" onClick={() => session.setErrorMsg('')}>Đóng</button></div>}
