@@ -263,12 +263,26 @@ export function AvatarCanvas({
 
   useEffect(() => {
     let cancelled = false;
-    fetch(VRM_URL, { method: 'HEAD' }).then((r) => {
+    // Thử HEAD trước; nếu máy chủ không hỗ trợ HEAD thì thử GET theo khoảng
+    // (1 byte) rồi hủy body ngay — tránh tải cả file 10 MB chỉ để kiểm tra.
+    const probe = async (): Promise<boolean> => {
+      try {
+        const r = await fetch(VRM_URL, { method: 'HEAD' });
+        const ct = (r.headers.get('content-type') || '').toLowerCase();
+        // Vite dev SPA fallback returns 200 + text/html for a missing file —
+        // content-type must not be HTML, otherwise the GLTF parse would fail.
+        if (r.ok && !ct.includes('text/html')) return true;
+      } catch { /* thử cách tiếp theo */ }
+      try {
+        const r = await fetch(VRM_URL, { headers: { Range: 'bytes=0-0' } });
+        const ct = (r.headers.get('content-type') || '').toLowerCase();
+        const ok = (r.ok || r.status === 206) && !ct.includes('text/html');
+        try { await r.body?.cancel(); } catch { /* bỏ qua */ }
+        return ok;
+      } catch { return false; }
+    };
+    probe().then((ok) => {
       if (cancelled) return;
-      // Vite dev SPA fallback returns 200 + text/html for a missing file —
-      // content-type must not be HTML, otherwise the GLTF parse would fail.
-      const ct = (r.headers.get('content-type') || '').toLowerCase();
-      const ok = r.ok && !ct.includes('text/html');
       setHasVrmFile(ok);
       const next: VrmStatus = ok ? 'vrm' : 'fallback';
       setStatus(next);
