@@ -34,6 +34,11 @@ export class AudioManager {
 
   get kind() { return this.currentKind; }
 
+  /** AudioContext state for the on-page diagnostic line ('running' = can sound). */
+  get contextState(): string {
+    return this.ctx ? this.ctx.state : 'chưa tạo';
+  }
+
   private ensureCtx(): AudioContext {
     if (!this.ctx) {
       this.ctx = new AudioContext();
@@ -134,10 +139,11 @@ export class AudioManager {
         if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
         const buf = await res.arrayBuffer();
         const audioBuf = await ctx.decodeAudioData(buf);
-        // Await the resume: on phones the context stays suspended until a
-        // gesture unlocks it (see unlockAudio); awaiting here lets a
-        // resume triggered by the tap complete before playback starts.
-        try { await ctx.resume(); } catch { /* still suspended; a later gesture unlocks */ }
+        // Await the resume, but never hang on it: on iOS WebKit resume()
+        // can stay pending forever without a fresh gesture, which would
+        // stall speech entirely. Race with a short timeout; a source
+        // started while suspended sounds as soon as a later tap unlocks.
+        try { await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 500))]); } catch { /* still suspended; a later gesture unlocks */ }
         const src = ctx.createBufferSource();
         src.buffer = audioBuf;
         src.connect(this.speechGain!);
@@ -150,7 +156,9 @@ export class AudioManager {
         try {
           const driver = getVrmLipSyncDriver();
           if (driver) {
-            await driver.unlock();
+            // Same hang guard as the resume above: never let the driver
+            // unlock stall speech on iOS WebKit.
+            await Promise.race([driver.unlock(), new Promise((r) => setTimeout(r, 300))]);
             await driver.attachAnalysisBuffer(audioBuf);
           }
         } catch { /* MFCC feeding failed; analyser fallback still applies */ }
