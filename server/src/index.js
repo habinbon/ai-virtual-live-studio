@@ -22,6 +22,7 @@ try {
 
 const moderation = require('./moderation/moderation');
 const store = require('./queue/store');
+const survey = require('./survey');
 const llm = require('./adapters/llm');
 const tts = require('./adapters/tts');
 const voicetube = require('./adapters/voicetube');
@@ -152,15 +153,41 @@ async function processQueue() {
   store.current = next;
   broadcast('queue', { queue: store.listQueue(), current: next });
   try {
-    // Manual "say" items are spoken verbatim — never rewritten by the LLM/mock.
-    // Lesson items are taught by the LLM with the lesson prompt.
-    const result = next.direct
-      ? { text: next.text, mock: false, provider: 'manual' }
-      : next.kind === 'lesson'
-        ? await llm.generateLesson({ topic: next.text, history: store.getHistory(6) })
-        : await llm.generateReply({
-            name: next.name, text: next.text, history: store.getHistory(6),
-          });
+    // Bảng khảo sát 10 câu: khách mới gửi câu hỏi đầu tiên thì bắt đầu
+    // khảo sát (từng câu một); khách đang làm dở thì tin mới là câu trả
+    // lời; đủ 10 câu thì LLM nhận định + lời mời kết nối chuyên gia.
+    // Bài giảng (lesson) và lời nói tay (direct) không qua khảo sát.
+    // Khách đã làm xong khảo sát thì các câu hỏi sau trả lời như thường.
+    let result;
+    const sKey = next.visitorKey || survey.keyFor(null, next.name);
+    if (next.direct) {
+      result = { text: next.text, mock: false, provider: 'manual' };
+    } else if (next.kind === 'lesson') {
+      result = await llm.generateLesson({ topic: next.text, history: store.getHistory(6) });
+    } else if (next.source === 'website' && survey.hasActive(sKey) && survey.isCancel(next.text)) {
+      result = survey.cancelSurvey(sKey);
+    } else if (next.source === 'website' && survey.hasActive(sKey)) {
+      const step = survey.recordAnswer(sKey, next.text);
+      if (step.needsAssessment) {
+        const st = step.state;
+        const assessed = await llm.generateAssessment({
+          name: st.name, concern: st.concern,
+          questions: survey.QUESTIONS, answers: st.answers,
+        });
+        result = {
+          text: `${assessed.text}\n${survey.handoffParagraph()}`,
+          mock: assessed.mock, provider: assessed.provider,
+        };
+      } else {
+        result = step;
+      }
+    } else if (next.source === 'website' && !survey.getState(sKey)) {
+      result = survey.startSurvey(sKey, next.name, next.text);
+    } else {
+      result = await llm.generateReply({
+        name: next.name, text: next.text, history: store.getHistory(6),
+      });
+    }
     next.reply = result.text;
     next.mock = result.mock;
     next.latencyMs = Date.now() - started;
@@ -224,9 +251,10 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, {
         ok: true, service: 'ai-virtual-live-studio',
-        build: 'always-sound-on-20261102',
+        build: 'survey-10-cau-20261102',
         state: flags.aiRunning ? (flags.paused ? 'PAUSED' : 'IDLE') : 'STOPPED',
         flags,
+        survey: { enabled: true, questions: survey.QUESTIONS.length, expertPhone: survey.expertPhone(), expertZoomConfigured: Boolean(survey.expertZoomUrl()) },
         llm: { configured: llm.isConfigured(), mock: !llm.isConfigured(), model: process.env.LLM_MODEL || null },
         teacher: { subject: llm.teacherSubject(), level: llm.teacherLevel() },
         tts: tts.status(),
@@ -340,14 +368,21 @@ const server = http.createServer(async (req, res) => {
     }
 
     // Bình luận công khai của học sinh: giới hạn theo IP, qua kiểm duyệt.
+    // Khách đang làm bảng khảo sát được miễn kiểm tra trùng lặp/giới hạn
+    // tốc độ (xem moderation.check) để trả lời đủ 10 câu liên tiếp.
     if (req.method === 'POST' && pathname === '/api/chat') {
-      if (!rateLimit(req, res, 'chat', 10)) return;
       const body = await readJsonBody(req);
-      const check = moderation.check({ name: body.name, text: body.text });
+      const visitorKey = survey.keyFor(body.visitor, body.name);
+      const inSurvey = survey.hasActive(visitorKey);
+      // Giới hạn 10 tin/phút theo IP vẫn áp dụng cho tin đầu tiên, nhưng
+      // câu trả lời trong bảng khảo sát được miễn để trả lời đủ 10 câu
+      // liên tiếp không bị chặn (cùng lý do như moderation.check).
+      if (!inSurvey && !rateLimit(req, res, 'chat', 10)) return;
+      const check = moderation.check({ name: body.name, text: body.text }, { inSurvey });
       if (!check.ok) {
         return sendJson(res, 422, { ok: false, status: 'rejected', reason: check.reason, message: check.message });
       }
-      const item = store.enqueue({ name: check.name, text: check.text, source: 'website' });
+      const item = store.enqueue({ name: check.name, text: check.text, source: 'website', visitorKey });
       broadcast('queue', { queue: store.listQueue() });
       setTimeout(processQueue, 50);
       return sendJson(res, 202, {
