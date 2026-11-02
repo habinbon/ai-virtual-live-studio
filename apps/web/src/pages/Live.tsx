@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AvatarCanvas, BACKGROUNDS, type BackgroundPreset } from '../components/AvatarCanvas';
 import { useLiveSession } from '../components/useLiveSession';
 import { api } from '../lib/api';
@@ -10,8 +10,16 @@ export function LivePage() {
   const [background, setBackground] = useState<BackgroundPreset>('office');
   const [vrmStatus, setVrmStatus] = useState('checking');
   const [audioOn, setAudioOn] = useState(true);
+  const [audioState, setAudioState] = useState('chưa tạo');
   const session = useLiveSession({ autoSpeak: true, audioEnabled: audioOn });
   const { health, queue, machineState, speakingText, errorMsg, anim, lipSyncNote, setLipSyncNote } = session;
+
+  // On-page audio diagnostic: shows whether the browser actually lets
+  // this page make sound (running = yes, suspended = locked by the phone).
+  useEffect(() => {
+    const id = window.setInterval(() => setAudioState(session.audio.contextState), 1000);
+    return () => window.clearInterval(id);
+  }, [session.audio]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +42,11 @@ export function LivePage() {
         <span className="ai-badge small">AI · KHÔNG PHẢI NGƯỜI THẬT</span>
         <span className="muted">Trạng thái: {machineState}</span>
         <button className="btn small" onClick={() => setAudioOn((v) => !v)}>{audioOn ? 'Tắt tiếng' : 'Bật tiếng'}</button>
+        <button className="btn small" onClick={() => {
+          void session.unlockAudio();
+          void session.audio.speak('Xin chào, Quyên là nhân vật AI. Đây là kiểm tra âm thanh.', session.health?.tts ?? null)
+            .catch((e) => session.setErrorMsg(`Lỗi thử tiếng: ${String((e as Error)?.message || e).slice(0, 200)}`));
+        }}>Thử tiếng</button>
       </header>
 
       <div className="live-body">
@@ -44,7 +57,7 @@ export function LivePage() {
             <div className="muted small">
               {health?.llm.mock ? 'Chế độ DEMO: chưa có LLM key — câu trả lời có tiền tố [BẢN DEMO — chưa có LLM]. ' : 'LLM đã cấu hình. '}
               {health?.ttsProvider === 'voicetube' ? 'Giọng: VoiceTube (server).' : health?.ttsProvider === 'vieneu' ? 'Giọng: VieNeu (server).' : health?.tts.configured ? 'Giọng: ElevenLabs (server).' : 'Giọng: demo SpeechSynthesis của trình duyệt.'}
-              {' '}VRM: {vrmStatus}. TikTok: CHƯA KHẢ DỤNG.
+              {' '}VRM: {vrmStatus}. TikTok: CHƯA KHẢ DỤNG. Âm thanh: {audioState}.
             </div>
             {errorMsg && <div className="error-box" role="alert">{errorMsg} <button className="btn small" onClick={() => session.setErrorMsg('')}>Đóng</button></div>}
           </div>
