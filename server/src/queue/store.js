@@ -30,12 +30,13 @@ function saveHistory() {
 }
 loadHistory();
 
-function enqueue({ name, text, source, priority = 0, direct = false, kind = 'question' }) {
+function enqueue({ name, text, source, priority = 0, direct = false, kind = 'question', visitorKey = null }) {
   const item = {
     id: `c${Date.now()}-${seq++}`,
     name, text, source: source || 'website', kind: kind === 'lesson' ? 'lesson' : 'question',
     createdAt: new Date().toISOString(),
     status: 'queued', priority, reply: null, mock: null, latencyMs: null, direct,
+    visitorKey: visitorKey || null,
   };
   queue.push(item);
   return item;
