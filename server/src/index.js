@@ -224,7 +224,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, {
         ok: true, service: 'ai-virtual-live-studio',
-        build: 'vrm-head-fix-20261101',
+        build: 'mobile-audio-unlock-20261102',
         state: flags.aiRunning ? (flags.paused ? 'PAUSED' : 'IDLE') : 'STOPPED',
         flags,
         llm: { configured: llm.isConfigured(), mock: !llm.isConfigured(), model: process.env.LLM_MODEL || null },
