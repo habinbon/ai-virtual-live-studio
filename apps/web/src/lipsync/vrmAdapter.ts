@@ -30,6 +30,8 @@ export interface VrmLipSyncDriver {
   update(): void;
   /** Stop the current source (mouth eases shut via engine smoothing). */
   stop(): void;
+  /** Resume the driver's AudioContext (mobile unlock). */
+  unlock(): Promise<void>;
   /** Stop the source and release audio resources. */
   dispose(): void;
   /**
@@ -108,6 +110,9 @@ export async function tryCreateVrmLipSync(
       },
       stop() {
         raw.stop();
+      },
+      async unlock() {
+        try { await raw.audioContext.resume(); } catch { /* stays suspended until a gesture */ }
       },
       dispose() {
         raw.dispose();
