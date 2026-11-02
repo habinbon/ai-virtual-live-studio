@@ -55,6 +55,19 @@ export class AudioManager {
     return this.ctx;
   }
 
+  /** Unlock audio on mobile browsers: MUST be called from a user gesture
+   * (tap/keypress). Phone browsers (iOS Safari, Android Chrome) create the
+   * AudioContext suspended and ignore resume() outside a gesture, so
+   * speech started from a poll timer stays silent without this. */
+  async unlockAudio(): Promise<void> {
+    try {
+      const ctx = this.ensureCtx();
+      if (ctx.state === 'suspended') await ctx.resume();
+    } catch { /* audio stays locked until the next gesture */ }
+    try { window.speechSynthesis?.getVoices?.(); } catch { /* no speechSynthesis */ }
+    try { await getVrmLipSyncDriver()?.unlock?.(); } catch { /* driver unlock failed */ }
+  }
+
   /** Called every frame by the avatar: updates mouthOpen from the analyser. */
   updateLipSync(): number {
     if (this.currentKind === 'speech' && this.speechSynthesisActive) {
@@ -121,6 +134,10 @@ export class AudioManager {
         if (!res.ok) throw new Error(`TTS HTTP ${res.status}`);
         const buf = await res.arrayBuffer();
         const audioBuf = await ctx.decodeAudioData(buf);
+        // Await the resume: on phones the context stays suspended until a
+        // gesture unlocks it (see unlockAudio); awaiting here lets a
+        // resume triggered by the tap complete before playback starts.
+        try { await ctx.resume(); } catch { /* still suspended; a later gesture unlocks */ }
         const src = ctx.createBufferSource();
         src.buffer = audioBuf;
         src.connect(this.speechGain!);
@@ -132,7 +149,10 @@ export class AudioManager {
         // driver failure break speech.
         try {
           const driver = getVrmLipSyncDriver();
-          if (driver) await driver.attachAnalysisBuffer(audioBuf);
+          if (driver) {
+            await driver.unlock();
+            await driver.attachAnalysisBuffer(audioBuf);
+          }
         } catch { /* MFCC feeding failed; analyser fallback still applies */ }
         // Re-attach analyser to the speech bus (already attached) and track
         // time from play() to first visible viseme for the PoC log.
