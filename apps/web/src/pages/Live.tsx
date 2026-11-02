@@ -9,9 +9,10 @@ export function LivePage() {
   const [sendMsg, setSendMsg] = useState('');
   const [background, setBackground] = useState<BackgroundPreset>('office');
   const [vrmStatus, setVrmStatus] = useState('checking');
-  const [audioOn, setAudioOn] = useState(true);
   const [audioState, setAudioState] = useState('chưa tạo');
-  const session = useLiveSession({ autoSpeak: true, audioEnabled: audioOn });
+  // Sound is always ON on the viewer page (user decision 2026-11-02): no
+  // mute toggle, so it can never be left off by an accidental tap.
+  const session = useLiveSession({ autoSpeak: true, audioEnabled: true });
   const { health, queue, machineState, speakingText, errorMsg, anim, lipSyncNote, setLipSyncNote } = session;
 
   // On-page audio diagnostic: shows whether the browser actually lets
@@ -41,7 +42,6 @@ export function LivePage() {
         <strong>Cô Quyên — Giáo viên AI</strong>
         <span className="ai-badge small">AI · KHÔNG PHẢI NGƯỜI THẬT</span>
         <span className="muted">Trạng thái: {machineState}</span>
-        <button className="btn small" onClick={() => setAudioOn((v) => !v)}>{audioOn ? 'Tắt tiếng' : 'Bật tiếng'}</button>
         <button className="btn small" onClick={() => {
           void session.unlockAudio();
           void session.audio.speak('Xin chào, Quyên là nhân vật AI. Đây là kiểm tra âm thanh.', session.health?.tts ?? null)
