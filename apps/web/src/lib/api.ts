@@ -3,7 +3,21 @@ export type QueueItem = {
   createdAt: string; status: 'queued' | 'thinking' | 'answered' | 'error' | 'cancelled';
   priority: number; reply: string | null; mock: boolean | null; latencyMs: number | null;
   kind?: 'question' | 'lesson';
+  visitorKey?: string | null;
 };
+
+// Mã khách riêng cho trình duyệt này (lưu ở localStorage) để server theo
+// dõi bảng khảo sát 10 câu theo từng người, kể cả khi nhiều người cùng tên.
+function visitorId(): string {
+  try {
+    let id = window.localStorage.getItem('ai-live-visitor-id');
+    if (!id) {
+      id = `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+      window.localStorage.setItem('ai-live-visitor-id', id);
+    }
+    return id;
+  } catch { return ''; }
+}
 export type Health = {
   ok: boolean; state: string;
   flags: { aiRunning: boolean; autoReply: boolean; paused: boolean };
@@ -25,7 +39,7 @@ export const api = {
   queue: () => fetch('/api/queue').then((r) => j<{ flags: Health['flags']; current: QueueItem | null; items: QueueItem[] }>(r)),
   history: (limit = 50) => fetch(`/api/history?limit=${limit}`).then((r) => j<{ items: Array<QueueItem & { answeredAt: string }> ; count: number }>(r)),
   chat: (name: string, text: string, source = 'website') =>
-    fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, text, source }) })
+    fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, text, source, visitor: visitorId() }) })
       .then(async (r) => ({ status: r.status, body: await j<Record<string, unknown>>(r) })),
   say: (text: string) =>
     fetch('/api/admin/say', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
