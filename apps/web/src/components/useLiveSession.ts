@@ -108,8 +108,28 @@ export function useLiveSession(opts: { autoSpeak: boolean; audioEnabled: boolean
     setSpeakingText('');
   }, [audio, machine]);
 
+  const unlockAudio = useCallback(() => {
+    void audio.unlockAudio();
+  }, [audio]);
+
+  // Mobile browsers suspend AudioContext until a user gesture. Unlock on
+  // every tap/keypress so speech actually sounds on phones; the context
+  // stays running afterwards, and a later tap re-unlocks it if the OS
+  // suspends it again (phone call, tab switch).
+  useEffect(() => {
+    const unlock = () => { void audio.unlockAudio(); };
+    window.addEventListener('pointerdown', unlock, { passive: true });
+    window.addEventListener('touchstart', unlock, { passive: true });
+    window.addEventListener('keydown', unlock);
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('touchstart', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
+  }, [audio]);
+
   return {
     anim, machine, machineState, health, queue, speakingText, errorMsg, setErrorMsg,
-    lipSyncNote, setLipSyncNote, audio, refresh, speak, cancelSpeech, spokenRef,
+    lipSyncNote, setLipSyncNote, audio, refresh, speak, cancelSpeech, spokenRef, unlockAudio,
   };
 }
