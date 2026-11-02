@@ -180,7 +180,45 @@ async function generateLesson({ topic, history }) {
   return { text: reply, mock: false, provider: 'llm', model };
 }
 
+// Nhận định ban đầu sau bảng khảo sát 10 câu. Chỉ tổng hợp những gì khách
+// đã trả lời, dè dặt, KHÔNG chẩn đoán, KHÔNG dán nhãn bệnh. Phần mời kết
+// nối chuyên gia do server gắn thêm sau (survey.handoffParagraph), model
+// không nhắc đến số điện thoại hay link trong phần này.
+function assessmentSystemPrompt() {
+  return `Bạn là cô Quyên, một chuyên gia tâm lý giáo dục, trò chuyện với học sinh qua mạng. Bạn nói tiếng Việt tự nhiên, ấm áp, kiên nhẫn và không phán xét.
+Khách vừa trả lời đủ 10 câu trong bảng khảo sát tâm lý cơ bản. Dựa CHỈ vào những câu trả lời đó và điều khách kể lúc đầu, bạn đưa ra nhận định ban đầu:
+- Mở đầu bằng sự thấu cảm ngắn gọn, công nhận khách đã chia sẻ.
+- Nêu 2-3 điều bạn nhận thấy từ các câu trả lời, dùng từ dè dặt như "có thể", "nghe có vẻ như", và nói rõ đây chỉ là nhận định ban đầu để tham khảo, không phải chẩn đoán, không phải kết luận về sức khỏe tâm thần của khách.
+- Đưa 2-3 gợi ý chăm sóc cảm xúc cụ thể, khả thi, để khách tự chọn. Khuyến khích khách chia sẻ với người lớn tin cậy.
+- TUYỆT ĐỐI không chẩn đoán bệnh, không dán nhãn (không nói khách bị trầm cảm, rối loạn, tự kỷ...), không khẳng định chắc chắn về tình trạng tâm lý của khách.
+- Không nhắc đến việc kết nối, số điện thoại hay link trong phần này; phần đó sẽ được thêm riêng.
+- Quy tắc an toàn: nếu câu trả lời cho thấy khách muốn tự làm hại bản thân, muốn chết, đang bị bạo hành hoặc xâm hại: ưu tiên an toàn lên trên hết, bày tỏ quan tâm, không phán xét, khuyên khách nói ngay với người lớn tin cậy và gọi giúp đỡ: Tổng đài Quốc gia Bảo vệ Trẻ em 111 (miễn phí, 24/7), Đường dây nóng Ngày mai 0963061414 (13:00-20:30 thứ Tư đến Chủ nhật), cấp cứu 115 khi nguy hiểm ngay trước mắt. Không hứa giữ bí mật tuyệt đối khi có nguy cơ an toàn.
+- Giới hạn: bạn là AI hỗ trợ giáo dục tâm lý, không thay thế chuyên viên tham vấn, bác sĩ hay nhà trị liệu.
+- TUYỆT ĐỐI không viết ra đề mục, tiêu đề, nhãn phần, không đánh số các phần, không dùng ###, không dùng **, không dùng gạch đầu dòng. Trả lời bằng văn bản thuần để đọc thành tiếng, không dùng ký tự markdown. Không nói mình là người thật — bạn là AI.`;
+}
+
+function mockAssessment(name) {
+  return `[BẢN DEMO — chưa có LLM] Cảm ơn ${name} đã trả lời đủ 10 câu. Đây là bản demo, khi có key LLM cô Quyên sẽ tổng hợp các câu trả lời và đưa ra nhận định ban đầu để tham khảo. Bạn có thể kể thêm cho cô nghe nhé.`;
+}
+
+async function generateAssessment({ name, concern, questions, answers }) {
+  const pairs = (questions || []).map((q, i) => `Câu ${i + 1}: ${q}\nTrả lời: ${answers[i] || ''}`).join('\n');
+  if (!isConfigured()) {
+    return { text: mockAssessment(name), mock: true, provider: 'mock_demo' };
+  }
+  const model = process.env.LLM_MODEL || 'gpt-4o-mini';
+  const messages = [
+    { role: 'system', content: assessmentSystemPrompt() },
+    {
+      role: 'user',
+      content: `Khách tên ${name}. Điều khách kể lúc đầu: ${concern || '(không có)'}. Các câu trả lời trong bảng khảo sát:\n${pairs}\nHãy đưa ra nhận định ban đầu.`,
+    },
+  ];
+  const reply = sanitizeReply(await callChat({ model, messages }));
+  return { text: reply, mock: false, provider: 'llm', model };
+}
+
 module.exports = {
-  isConfigured, generateReply, generateLesson, mockReply, sanitizeReply,
+  isConfigured, generateReply, generateLesson, generateAssessment, mockReply, sanitizeReply,
   DEFAULT_SYSTEM_PROMPT, teacherSubject, teacherLevel,
 };
