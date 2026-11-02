@@ -21,7 +21,7 @@ function normalize(s) {
   return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-function check({ name, text }) {
+function check({ name, text }, opts = {}) {
   const cleanName = String(name || 'Khách').trim().slice(0, 40) || 'Khách';
   const cleanText = String(text || '').trim();
   if (!cleanText) return { ok: false, reason: 'EMPTY', message: 'Bình luận trống.' };
@@ -38,16 +38,21 @@ function check({ name, text }) {
   }
   const now = Date.now();
   const key = `${normalize(cleanName)}|${lower}`;
-  const last = seenMap.get(key);
-  if (last && now - last < DUPLICATE_MS) {
-    return { ok: false, reason: 'DUPLICATE', message: 'Bình luận trùng lặp vừa gửi.' };
+  // Câu trả lời trong bảng khảo sát được miễn kiểm tra trùng lặp và giới
+  // hạn tốc độ: đáp án ngắn như "có", "thỉnh thoảng" lặp lại là bình thường
+  // và 10 câu trả lời liên tiếp sẽ vượt 3 tin/phút. Nội dung cấm vẫn chặn.
+  if (!opts.inSurvey) {
+    const last = seenMap.get(key);
+    if (last && now - last < DUPLICATE_MS) {
+      return { ok: false, reason: 'DUPLICATE', message: 'Bình luận trùng lặp vừa gửi.' };
+    }
+    const arr = (rateMap.get(normalize(cleanName)) || []).filter((t) => now - t < WINDOW_MS);
+    if (arr.length >= MAX_PER_WINDOW) {
+      return { ok: false, reason: 'RATE_LIMIT', message: 'Bạn gửi quá nhanh, chờ một chút nhé.' };
+    }
+    arr.push(now);
+    rateMap.set(normalize(cleanName), arr);
   }
-  const arr = (rateMap.get(normalize(cleanName)) || []).filter((t) => now - t < WINDOW_MS);
-  if (arr.length >= MAX_PER_WINDOW) {
-    return { ok: false, reason: 'RATE_LIMIT', message: 'Bạn gửi quá nhanh, chờ một chút nhé.' };
-  }
-  arr.push(now);
-  rateMap.set(normalize(cleanName), arr);
   seenMap.set(key, now);
   // prune
   for (const [k, t] of seenMap) if (now - t > DUPLICATE_MS) seenMap.delete(k);
