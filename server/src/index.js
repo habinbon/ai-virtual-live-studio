@@ -251,7 +251,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, {
         ok: true, service: 'ai-virtual-live-studio',
-        build: 'survey-10-cau-20261102',
+        build: 'avatar-2d-20261107',
         state: flags.aiRunning ? (flags.paused ? 'PAUSED' : 'IDLE') : 'STOPPED',
         flags,
         survey: { enabled: true, questions: survey.QUESTIONS.length, expertPhone: survey.expertPhone(), expertZoomConfigured: Boolean(survey.expertZoomUrl()) },
