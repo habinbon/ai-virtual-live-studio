@@ -5,8 +5,11 @@ import type { AvatarAnimState } from '../audio/animState';
  * 2D photo avatar: the cô Quyên portrait (1120x2240) with a blinking
  * eyelid overlay + a talking-mouth overlay.
  *
- * Positions are % of the portrait: eyes ~y 33% (left eye centre x ~40.5%,
- * right eye centre x ~59.6%), mouth centre x 50%, y ~46.5%.
+ * Positions are % of the portrait, MEASURED by visual grounding on
+ * 2026-11-07 (do not re-estimate by eye): mouth centre x 50.5%, y 50.1%;
+ * left eye centre x 59.7%, y 40.8%; right eye centre x 39.7%, y 42.1%;
+ * nose tip x 50.2%, y 47.2%. First version had the mouth at 46.5% — that
+ * is the NOSE, user reported "mồm mấp máy lại ở mũi ảnh"; fixed to 50.1%.
  *
  * Mouth level comes from anim.mouthOpen, updated every frame by
  * useLiveSession's rAF loop (AudioManager.updateLipSync) — this component
@@ -61,8 +64,8 @@ export function Avatar2D({ anim }: { anim: AvatarAnimState }) {
     <div className="avatar2d">
       <div className="avatar2d-frame">
         <img className="avatar2d-img" src={PORTRAIT_URL} alt="Cô Quyên — nhân vật AI" draggable={false} />
-        <div ref={lidL} className="avatar2d-lid" style={{ left: '37.3%' }} />
-        <div ref={lidR} className="avatar2d-lid" style={{ left: '56.4%' }} />
+        <div ref={lidL} className="avatar2d-lid" style={{ left: '37.3%', top: '40.0%' }} />
+        <div ref={lidR} className="avatar2d-lid" style={{ left: '56.4%', top: '40.0%' }} />
         <div ref={mouth} className="avatar2d-mouth" />
       </div>
       <div className="avatar-badge">Ảnh 2D — cô Quyên (chớp mắt + mấp máy môi theo giọng nói).</div>
