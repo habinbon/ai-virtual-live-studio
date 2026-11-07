@@ -58,8 +58,8 @@ th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--line); 
 .avatar2d { position: relative; width: 100%; height: 100%; overflow: hidden; background: #17100b; display: flex; justify-content: center; }
 .avatar2d-frame { position: relative; height: 100%; aspect-ratio: 1 / 2; max-width: 100%; animation: avatar2d-breathe 5s ease-in-out infinite; }
 .avatar2d-img { display: block; width: 100%; height: 100%; object-fit: contain; user-select: none; }
-.avatar2d-lid { position: absolute; top: 31.8%; width: 6.8%; height: 2.4%; transform: scaleY(0); transform-origin: top; background: linear-gradient(#f3cfae, #eec39e); border-bottom: 2px solid #a97c50; border-radius: 0 0 50% 50%; pointer-events: none; }
-.avatar2d-mouth { position: absolute; left: 46.4%; top: 46.5%; width: 7.2%; height: 0; transform: translateY(-50%); background: radial-gradient(ellipse at center, #7a2a22 0%, #5b1a1a 70%); border-radius: 50%; opacity: 0; pointer-events: none; }
+.avatar2d-lid { position: absolute; top: 40.0%; width: 6.8%; height: 2.8%; transform: scaleY(0); transform-origin: top; background: linear-gradient(#f3cfae, #eec39e); border-bottom: 2px solid #a97c50; border-radius: 0 0 50% 50%; pointer-events: none; }
+.avatar2d-mouth { position: absolute; left: 46.4%; top: 50.1%; width: 7.2%; height: 0; transform: translateY(-50%); background: radial-gradient(ellipse at center, #7a2a22 0%, #5b1a1a 70%); border-radius: 50%; opacity: 0; pointer-events: none; }
 @keyframes avatar2d-breathe { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-0.5%) rotate(0.25deg); } }
 
 /* Broadcast: clean, fills viewport, 9:16 friendly */
