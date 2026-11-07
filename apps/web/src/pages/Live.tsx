@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AvatarCanvas, BACKGROUNDS, type BackgroundPreset } from '../components/AvatarCanvas';
+import { Avatar2D } from '../components/Avatar2D';
 import { useLiveSession } from '../components/useLiveSession';
 import { api } from '../lib/api';
 
@@ -8,6 +9,13 @@ export function LivePage() {
   const [text, setText] = useState('');
   const [sendMsg, setSendMsg] = useState('');
   const [background, setBackground] = useState<BackgroundPreset>('office');
+  // Avatar mode: 2D photo portrait is the default (user decision 2026-11-07:
+  // "được bạn cho thử đi" — try the cô Quyên image); 3D VRM stays available.
+  const [avatarMode, setAvatarMode] = useState<'2d' | '3d'>(() =>
+    window.localStorage.getItem('ai-live-avatar-mode') === '3d' ? '3d' : '2d');
+  useEffect(() => {
+    window.localStorage.setItem('ai-live-avatar-mode', avatarMode);
+  }, [avatarMode]);
   const [vrmStatus, setVrmStatus] = useState('checking');
   const [audioState, setAudioState] = useState('chưa tạo');
   // Sound is always ON on the viewer page (user decision 2026-11-02): no
@@ -51,13 +59,17 @@ export function LivePage() {
 
       <div className="live-body">
         <section className="stage">
-          <AvatarCanvas anim={anim} background={background} onVrmStatus={(s) => setVrmStatus(s)} lipSyncNote={lipSyncNote} onLipSyncNote={setLipSyncNote} />
+          {avatarMode === '2d' ? (
+            <Avatar2D anim={anim} />
+          ) : (
+            <AvatarCanvas anim={anim} background={background} onVrmStatus={(s) => setVrmStatus(s)} lipSyncNote={lipSyncNote} onLipSyncNote={setLipSyncNote} />
+          )}
           <div className="stage-footer">
             <div className="subtitle" aria-live="polite">{speakingText || (machineState === 'THINKING' ? 'Cô Quyên đang suy nghĩ…' : machineState === 'SINGING' ? '♪ Đang hát nhép theo nhạc…' : 'Cô Quyên đang lắng nghe — hãy gửi câu hỏi nhé!')}</div>
             <div className="muted small">
               {health?.llm.mock ? 'Chế độ DEMO: chưa có LLM key — câu trả lời có tiền tố [BẢN DEMO — chưa có LLM]. ' : 'LLM đã cấu hình. '}
               {health?.ttsProvider === 'voicetube' ? 'Giọng: VoiceTube (server).' : health?.ttsProvider === 'vieneu' ? 'Giọng: VieNeu (server).' : health?.tts.configured ? 'Giọng: ElevenLabs (server).' : 'Giọng: demo SpeechSynthesis của trình duyệt.'}
-              {' '}VRM: {vrmStatus}. TikTok: CHƯA KHẢ DỤNG. Âm thanh: {audioState}.
+              {' '}{avatarMode === '2d' ? 'Nhân vật: Ảnh 2D (cô Quyên).' : `VRM: ${vrmStatus}.`} TikTok: CHƯA KHẢ DỤNG. Âm thanh: {audioState}.
             </div>
             {errorMsg && <div className="error-box" role="alert">{errorMsg} <button className="btn small" onClick={() => session.setErrorMsg('')}>Đóng</button></div>}
           </div>
@@ -65,11 +77,21 @@ export function LivePage() {
 
         <aside className="chat-panel">
           <h2>Câu hỏi của học sinh</h2>
-          <label>Background
-            <select value={background} onChange={(e) => setBackground(e.target.value as BackgroundPreset)}>
-              {Object.entries(BACKGROUNDS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          <label>Nhân vật
+            <select value={avatarMode} onChange={(e) => setAvatarMode(e.target.value as '2d' | '3d')}>
+              <option value="2d">Ảnh 2D — cô Quyên</option>
+              <option value="3d">Mô hình 3D (VRM)</option>
             </select>
           </label>
+          {avatarMode === '3d' ? (
+            <label>Background
+              <select value={background} onChange={(e) => setBackground(e.target.value as BackgroundPreset)}>
+                {Object.entries(BACKGROUNDS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
+            </label>
+          ) : (
+            <p className="muted small">Ảnh 2D đã có sẵn nền văn phòng trong ảnh, không cần chọn background.</p>
+          )}
           <div className="row">
             <button className="btn small" onClick={session.cancelSpeech}>Hủy câu trả lời đang nói</button>
           </div>
